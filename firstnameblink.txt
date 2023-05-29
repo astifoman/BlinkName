@@ -1,0 +1,64 @@
+// Pin assignments for LED and pin with button
+const int buttonPin = D2;
+const int ledPin = D7;
+
+// This is an array I have created to map each letter of my name or another name if I wanted to change it 
+const char* morseCode[] = {
+  ".--.", ".-", "..-", ".-.."
+};
+
+// Variables to track the state of the button and the state of the current letter and symbol being blinked
+volatile bool buttonPressed = false;
+volatile bool blinkEnabled = false;
+volatile int currentLetter = 0;
+volatile int currentSymbol = 0;
+
+//Setting pin modes, the attachInterrupt function attaches an interrupt to the button pin and is triggered when the button is pressed
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+  
+  attachInterrupt(buttonPin, buttonInterrupt, FALLING);
+}
+
+//loop that checks if the blinking is enabled, if it is then it will blink the current letter
+void loop() {
+  if (blinkEnabled) {
+    if (currentSymbol < strlen(morseCode[currentLetter])) {
+      char symbol = morseCode[currentLetter][currentSymbol];
+      if (symbol == '.') {
+        blinkLED(200); // Dot duration: 200ms
+      } else if (symbol == '-') {
+        blinkLED(600); // Dash duration: 600ms
+      }
+      delay(200); // Pause between symbols
+      currentSymbol++;
+    } else {
+      delay(800); // Pause between letters
+      currentSymbol = 0;
+      currentLetter = (currentLetter + 1) % 4;
+    }
+  }
+}
+
+//responsible for turning on the led for a certain duration then turning it off.
+void blinkLED(int duration) {
+  digitalWrite(ledPin, HIGH);
+  delay(duration);
+  digitalWrite(ledPin, LOW);
+  delay(200); // Pause between dots and dashes
+}
+
+void buttonInterrupt() {
+  if (buttonPressed) {
+    // Disable blinking
+    blinkEnabled = false;
+  } else {
+    // Enable blinking and reset variables
+    currentLetter = 0;
+    currentSymbol = 0;
+    blinkEnabled = true;
+  }
+  
+  buttonPressed = !buttonPressed;
+}
